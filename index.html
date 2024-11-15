@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Index - View Posts</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* Global Styles */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body { background-color: #f8f9fa; color: #333; }
+    .container { max-width: 800px; margin: 30px auto; padding: 0 5%; }
+
+    /* Header */
+    header { display: flex; justify-content: space-between; align-items: center; padding: 15px 5%; background: #fff; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); position: sticky; top: 0; z-index: 1000; }
+    .logo { font-size: 24px; font-weight: bold; color: #e50914; text-decoration: none; }
+    .manage-link { color: #e50914; font-weight: bold; text-decoration: none; }
+
+    /* Post List */
+    .post-list { margin-top: 20px; }
+    .post-item { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); cursor: pointer; transition: transform 0.3s; }
+    .post-item:hover { transform: scale(1.02); }
+    .post-title { font-size: 22px; font-weight: bold; color: #333; margin-bottom: 10px; }
+    .post-meta { font-size: 14px; color: #888; margin-bottom: 15px; }
+    .post-content { font-size: 16px; color: #555; line-height: 1.6; max-height: 60px; overflow: hidden; }
+
+    /* Empty State */
+    .empty-message { text-align: center; font-size: 18px; color: #888; margin-top: 20px; }
+  </style>
+  <script>
+    const GITHUB_API_URL = "https://api.github.com";
+    const REPO = "zooxinirll/cagsec";
+    const FILE_PATH = "posts.json";
+    const GITHUB_TOKEN = "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"; // Replace with your GitHub Personal Access Token
+
+    async function fetchPosts() {
+      try {
+        const response = await fetch(`${GITHUB_API_URL}/repos/${REPO}/contents/${FILE_PATH}`, {
+          headers: {
+            "Authorization": `token ${GITHUB_TOKEN}`,
+            "Accept": "application/vnd.github.v3+json"
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.content) {
+            const posts = JSON.parse(atob(data.content));
+            return posts;
+          }
+        }
+
+        throw new Error(`GitHub API Error: ${response.status} ${response.statusText}`);
+      } catch (error) {
+        console.error("Failed to fetch posts:", error);
+        return [];
+      }
+    }
+
+    function escapeHTML(str) {
+      return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    }
+
+    async function loadPosts() {
+      const postsContainer = document.querySelector('.post-list');
+      postsContainer.innerHTML = '<p class="empty-message">Loading posts...</p>';
+
+      const posts = await fetchPosts();
+
+      if (posts.length === 0) {
+        postsContainer.innerHTML = '<p class="empty-message">No posts available. Please check back later.</p>';
+        return;
+      }
+
+      postsContainer.innerHTML = posts.map(post => `
+        <div class="post-item" onclick="location.href='post.html?id=${post.id}'">
+          <h2 class="post-title">${escapeHTML(post.title)}</h2>
+          <div class="post-meta"><i class="far fa-calendar-alt"></i> ${new Date(post.id).toLocaleDateString()}</div>
+          <p class="post-content">${escapeHTML(post.content).substring(0, 100)}...</p>
+        </div>
+      `).join('');
+    }
+
+    window.onload = loadPosts;
+  </script>
+</head>
+<body>
+  <header>
+    <a href="index.html" class="logo">LOCALHOST-07</a>
+    <a href="dashboard.html" class="manage-link">Manage Posts</a>
+  </header>
+
+  <div class="container">
+    <div class="post-list"></div>
+  </div>
+</body>
+</html>

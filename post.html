@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Post View</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* Global Styles */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body { background-color: #f8f9fa; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+
+    /* Container */
+    .container { max-width: 800px; width: 90%; background: #fff; padding: 20px 30px; border-radius: 10px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); }
+
+    /* Header */
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .logo { font-size: 24px; font-weight: bold; color: #e50914; text-decoration: none; }
+    .back-button { color: #e50914; font-weight: bold; font-size: 16px; text-decoration: none; display: flex; align-items: center; }
+    .back-button i { margin-right: 5px; }
+
+    /* Post Title */
+    .title { font-size: 36px; color: #333; font-weight: 700; margin-bottom: 20px; line-height: 1.2; }
+
+    /* Post Meta Information */
+    .post-meta { color: #888; font-size: 14px; margin-bottom: 20px; }
+    .post-meta span { margin-right: 10px; }
+
+    /* Content and Media */
+    .content { font-size: 18px; line-height: 1.8; color: #555; margin-bottom: 20px; }
+    .media img, .media video { width: 100%; border-radius: 8px; margin-bottom: 20px; }
+
+    /* Footer */
+    footer { text-align: center; margin-top: 20px; font-size: 14px; color: #888; }
+  </style>
+  <script>
+    const GITHUB_API_URL = "https://api.github.com";
+    const REPO = "zooxinirll/cagsec";
+    const FILE_PATH = "posts.json";
+    const GITHUB_TOKEN = "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"; // Replace with your GitHub PAT
+
+    async function fetchPosts() {
+      try {
+        const response = await fetch(`${GITHUB_API_URL}/repos/${REPO}/contents/${FILE_PATH}`, {
+          headers: {
+            "Authorization": `token ${GITHUB_TOKEN}`,
+            "Accept": "application/vnd.github.v3+json"
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch posts: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        return JSON.parse(atob(data.content)) || [];
+      } catch (error) {
+        console.error("Error fetching posts:", error.message);
+        document.querySelector(".container").innerHTML = `
+          <p style="text-align:center; font-size:18px; color:#888;">
+            Failed to load posts. Please try again later.
+          </p>`;
+        return [];
+      }
+    }
+
+    function escapeHTML(str) {
+      return str.replace(/[&<>"']/g, m => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[m]));
+    }
+
+    async function loadPost() {
+      const params = new URLSearchParams(window.location.search);
+      const postId = params.get("id");
+
+      if (!postId) {
+        document.querySelector(".container").innerHTML = `
+          <p style="text-align:center; font-size:18px; color:#888;">
+            Invalid post ID. <a href="index.html" style="color:#e50914;">Return to home</a>
+          </p>`;
+        return;
+      }
+
+      const posts = await fetchPosts();
+      const post = posts.find(p => p.id === postId);
+
+      if (!post) {
+        document.querySelector(".container").innerHTML = `
+          <p style="text-align:center; font-size:18px; color:#888;">
+            Post not found. <a href="index.html" style="color:#e50914;">Return to home</a>
+          </p>`;
+        return;
+      }
+
+      document.querySelector(".title").textContent = escapeHTML(post.title || "Untitled Post");
+      document.querySelector(".post-meta").innerHTML = `
+        <span><i class="far fa-calendar-alt"></i> ${new Date(post.id).toLocaleDateString()}</span>
+        <span><i class="fas fa-user"></i> ${escapeHTML(post.author || "Anonymous")}</span>
+      `;
+      document.querySelector(".content").textContent = post.content || "No content available.";
+    }
+
+    window.onload = loadPost;
+  </script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a href="index.html" class="logo">LOCALHOST-07</a>
+      <a href="index.html" class="back-button"><i class="fas fa-arrow-left"></i> Back to Posts</a>
+    </header>
+
+    <h1 class="title">Loading...</h1>
+    <div class="post-meta"></div>
+    <div class="content"></div>
+
+    <footer>
+      <p>&copy; 2024 LOCALHOST-07. All rights reserved.</p>
+    </footer>
+  </div>
+</body>
+</html>
